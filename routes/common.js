@@ -3,16 +3,16 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const router = express.Router();
-
+const jwt = require("jsonwebtoken");
 // เพิ่ม code
 const MongoClient = require('mongodb').MongoClient;
-// ให้เปลี่ยน rtarf02-05 ตามจำนวนเครื่อง
-var mongo_db_url = "mongodb://rtarf05:rtarf05@122.155.202.161:27017/rtarf05?authSource=rtarf05";
+
+const DB_NAME = 'rtarf05';
+var mongo_db_url = "mongodb://" + DB_NAME + ":" + DB_NAME + "@122.155.202.161:27017/" + DB_NAME + "?authSource=" + DB_NAME;
 // จบ  code
 const ObjectID = require('mongodb').ObjectID;
 
 const DIR = './uploads';
-const DB_NAME = 'rtarf05';
 const TB_NAME = 'files'
 
 router.get('/', (req, res) => {
@@ -104,11 +104,30 @@ router.post('/login', (req, res) => {
             }
             // เปลี่ยนเป็น  rtarf01-04 ตามเครื่องนักเรียน
             let dbo = db.db(DB_NAME);
+
             let item = await dbo.collection('user').findOne(query);
             db.close();
-            res.send({
-                item
-            });
+            if (item) {
+                var payload = {
+                    id: item._id,
+                    rank: item.rank,
+                    first_name: item.first_name,
+                    last_name: item.last_name
+                };
+                var token = jwt.sign(payload, "rtarf_secret");
+                res.send(
+                    JSON.stringify({
+                        status: true,
+                        token: token
+                    })
+                );
+            } else {
+                res.send({
+                    status: false
+                });
+            }
+
+
         }
     );
 });
