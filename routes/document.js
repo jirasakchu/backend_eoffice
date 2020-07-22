@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const MongoClient = require('mongodb').MongoClient;
+const ObjectID = require('mongodb').ObjectID;
 
 const DB_NAME = 'rtarf05';
 const TB_NAME = 'document'
@@ -53,5 +54,37 @@ router.post('/add-file', (req, res) => {
         }
     );
 });
+router.post('/update', (req, res) => {
+    let formData = req.body.formData;
+    let id = req.body.id;
 
+    connectMongoDBNoToken(res, async db => {
+        let dbo = db.db(DB_NAME);
+        const collection = dbo.collection(TB_NAME);
+
+        let query = {
+            "_id": ObjectID(id),
+        }
+
+        let updateCommand = {
+            $set: {
+                "users_action": formData.user_list
+            }
+        }
+
+        let result = await collection.updateOne(query, updateCommand);
+
+        db.close();
+        if (result) {
+            res.send({
+                status: true,
+                result
+            });
+        } else {
+            res.send({
+                status: false
+            });
+        }
+    });
+});
 module.exports = router;
